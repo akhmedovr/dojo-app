@@ -56,21 +56,32 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    .character {
+    .character-shadow {
       position: absolute;
-      bottom: 22%;
+      bottom: 18%;
       left: 50%;
       transform: translateX(-50%);
-      width: 55%;
-      max-width: 320px;
+      width: 120px;
+      height: 20px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
+      z-index: 4;
+      filter: blur(3px);
+    }
+
+    .character {
+      position: absolute;
+      bottom: 19%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 340px;
       z-index: 5;
       animation: breathe 3s ease-in-out infinite;
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
     }
 
     @keyframes breathe {
       0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
-      50% { transform: translateX(-50%) translateY(-4px) scale(1.015); }
+      50% { transform: translateX(-50%) translateY(-3px) scale(1.01); }
     }
 
     .title-block {
@@ -273,7 +284,8 @@
       <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <img src="charactel_male.png.png" alt="" class="character" id="character">
+    <div class="character-shadow"></div>
+    <img src="IMG_8938.png" alt="" class="character" id="character">
 
     <div class="bubble" id="bubble">Привет, Алекс! Готов начать день?</div>
 
