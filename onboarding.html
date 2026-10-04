@@ -139,7 +139,6 @@
       }
     }
 
-    /* Солнце — плавно поднимается */
     .sun {
       position: absolute;
       bottom: -60px;
@@ -174,7 +173,6 @@
       }
     }
 
-    /* Лучи — вращаются медленно */
     .rays {
       position: absolute;
       inset: 0;
@@ -194,8 +192,6 @@
         rgba(255, 169, 77, 0.1) 98deg,
         transparent 106deg
       );
-      animation: raysRotate 30s linear infinite;
-      opacity: 0;
       animation: raysRotate 30s linear infinite, raysFade 6s ease-in-out infinite;
     }
 
@@ -209,7 +205,6 @@
       50% { opacity: 0.8; }
     }
 
-    /* Горизонт — тёмная полоса снизу, скрывает «низ» солнца */
     .horizon {
       position: absolute;
       bottom: 0;
@@ -497,7 +492,6 @@
 <body>
   <div class="bg"></div>
 
-  <!-- Прогресс -->
   <div class="progress" id="progress">
     <div class="dot" data-step="0"></div>
     <div class="dot" data-step="1"></div>
@@ -508,7 +502,6 @@
     <div class="dot" data-step="6"></div>
   </div>
 
-  <!-- Назад -->
   <button class="back" id="backBtn">←</button>
 
   <!-- ШАГ 1: ХУК -->
@@ -655,7 +648,6 @@
     </p>
   </div>
 
-  <!-- Кнопка -->
   <div class="actions" id="actions">
     <button class="btn" id="nextBtn" disabled>Начать</button>
   </div>
@@ -667,6 +659,12 @@
       tg.ready();
       tg.expand();
       tg.setHeaderColor?.('#1a1524');
+    }
+
+    // === Сброс через URL ===
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === '1') {
+      localStorage.removeItem('alter_user');
     }
 
     // === Состояние ===
@@ -731,7 +729,6 @@
       }, 50);
     }
 
-    // === Прогресс ===
     function updateProgress() {
       dots.forEach((dot, i) => {
         dot.classList.remove('active', 'done');
@@ -740,7 +737,6 @@
       });
     }
 
-    // === Кнопка назад ===
     function updateBack() {
       if (state.step > 0 && state.step < 6) {
         backBtn.classList.add('visible');
@@ -749,7 +745,6 @@
       }
     }
 
-    // === Обновление кнопки ===
     function updateButton() {
       const step = state.step;
       nextBtn.textContent = buttonTexts[step];
@@ -768,7 +763,6 @@
       nextBtn.disabled = !canProceed;
     }
 
-    // === Ввод имени ===
     nameInput.addEventListener('input', (e) => {
       state.name = e.target.value;
       updateButton();
@@ -781,7 +775,6 @@
       }
     });
 
-    // === Выбор карточек ===
     document.querySelectorAll('.card').forEach(card => {
       card.addEventListener('click', () => {
         const parent = card.closest('.screen');
@@ -799,7 +792,6 @@
       });
     });
 
-    // === Выбор пола ===
     document.querySelectorAll('.gender-card').forEach(card => {
       card.addEventListener('click', () => {
         document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
@@ -816,12 +808,10 @@
       });
     });
 
-    // === Кнопка назад ===
     backBtn.addEventListener('click', () => {
       goToStep(state.step - 1);
     });
 
-    // === Кнопка Дальше / Начать ===
     nextBtn.addEventListener('click', () => {
       if (state.step === 6) {
         finalName.textContent = state.name || 'друг';
@@ -851,7 +841,6 @@
       }
     });
 
-    // === Фокус на поле имени ===
     const observer = new MutationObserver(() => {
       if (state.step === 1 && document.querySelector('.screen.active')?.dataset.step === '1') {
         setTimeout(() => nameInput.focus(), 500);
@@ -860,7 +849,6 @@
 
     screens.forEach(s => observer.observe(s, { attributes: true, attributeFilter: ['class'] }));
 
-    // === Инициализация ===
     updateProgress();
     updateButton();
     updateBack();
