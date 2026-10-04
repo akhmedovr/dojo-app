@@ -55,7 +55,6 @@
       display: flex;
       gap: 6px;
       z-index: 100;
-      transition: opacity 0.3s ease;
     }
 
     .dot {
@@ -104,6 +103,126 @@
       transform: translateY(-20px);
     }
 
+    /* ===== РАССВЕТ ===== */
+    .sunrise {
+      position: relative;
+      width: 180px;
+      height: 180px;
+      margin-bottom: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(to bottom,
+        #2a1f3d 0%,
+        #4a2c5a 30%,
+        #8b3a62 55%,
+        #d94f4f 75%,
+        #ffa94d 100%);
+      box-shadow:
+        0 24px 60px rgba(255, 169, 77, 0.3),
+        0 0 0 1px rgba(255, 209, 102, 0.15),
+        inset 0 0 40px rgba(255, 169, 77, 0.08);
+      animation: skyGlow 6s ease-in-out infinite;
+    }
+
+    @keyframes skyGlow {
+      0%, 100% {
+        box-shadow:
+          0 24px 60px rgba(255, 169, 77, 0.25),
+          0 0 0 1px rgba(255, 209, 102, 0.12),
+          inset 0 0 40px rgba(255, 169, 77, 0.05);
+      }
+      50% {
+        box-shadow:
+          0 24px 80px rgba(255, 169, 77, 0.5),
+          0 0 0 1px rgba(255, 209, 102, 0.25),
+          inset 0 0 60px rgba(255, 169, 77, 0.15);
+      }
+    }
+
+    /* Солнце — плавно поднимается */
+    .sun {
+      position: absolute;
+      bottom: -60px;
+      left: 50%;
+      margin-left: -40px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%,
+        #fff3c4 0%,
+        #ffe68a 25%,
+        #ffb547 60%,
+        #ff8c42 100%);
+      box-shadow:
+        0 0 30px rgba(255, 209, 102, 0.9),
+        0 0 70px rgba(255, 169, 77, 0.6),
+        0 0 120px rgba(255, 140, 66, 0.4);
+      animation: rise 6s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    @keyframes rise {
+      0%, 100% {
+        bottom: -60px;
+        opacity: 0.6;
+        transform: scale(0.9);
+      }
+      50% {
+        bottom: 30px;
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Лучи — вращаются медленно */
+    .rays {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: conic-gradient(
+        from 0deg at 50% 100%,
+        transparent 0deg,
+        rgba(255, 209, 102, 0.15) 8deg,
+        transparent 16deg,
+        transparent 30deg,
+        rgba(255, 169, 77, 0.1) 38deg,
+        transparent 46deg,
+        transparent 60deg,
+        rgba(255, 209, 102, 0.12) 68deg,
+        transparent 76deg,
+        transparent 90deg,
+        rgba(255, 169, 77, 0.1) 98deg,
+        transparent 106deg
+      );
+      animation: raysRotate 30s linear infinite;
+      opacity: 0;
+      animation: raysRotate 30s linear infinite, raysFade 6s ease-in-out infinite;
+    }
+
+    @keyframes raysRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes raysFade {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Горизонт — тёмная полоса снизу, скрывает «низ» солнца */
+    .horizon {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 35%;
+      background: linear-gradient(to top,
+        #1a1524 0%,
+        rgba(26, 21, 36, 0.95) 40%,
+        transparent 100%);
+      z-index: 2;
+    }
+
     /* ===== ЗАГОЛОВКИ ===== */
     .heading {
       font-size: 32px;
@@ -130,18 +249,6 @@
       max-width: 340px;
     }
 
-    /* ===== ХУК ===== */
-    .hook-icon {
-      font-size: 72px;
-      margin-bottom: 24px;
-      animation: pulse 3s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.06); opacity: 0.9; }
-    }
-
     /* ===== ВВОД ИМЕНИ ===== */
     .name-input {
       width: 100%;
@@ -156,6 +263,7 @@
       text-align: center;
       font-weight: 600;
       transition: all 0.3s ease;
+      font-family: inherit;
     }
 
     .name-input:focus {
@@ -323,7 +431,6 @@
       padding: 20px 32px calc(20px + env(safe-area-inset-bottom));
       z-index: 100;
       background: linear-gradient(to top, rgba(26, 21, 36, 0.95), transparent);
-      transition: opacity 0.3s ease;
     }
 
     .btn {
@@ -406,7 +513,11 @@
 
   <!-- ШАГ 1: ХУК -->
   <div class="screen active" data-step="0">
-    <div class="hook-icon">🌅</div>
+    <div class="sunrise">
+      <div class="rays"></div>
+      <div class="sun"></div>
+      <div class="horizon"></div>
+    </div>
     <h1 class="heading">
       Каждый день<br>
       обещаешь <span class="gold">начать</span>.<br>
@@ -584,7 +695,6 @@
     const dots = document.querySelectorAll('.dot');
     const nextBtn = document.getElementById('nextBtn');
     const backBtn = document.getElementById('backBtn');
-    const progress = document.getElementById('progress');
     const nameInput = document.getElementById('nameInput');
     const finalName = document.getElementById('finalName');
     const finalAvatar = document.getElementById('finalAvatar');
@@ -678,11 +788,9 @@
         const step = parseInt(parent.dataset.step);
         const value = card.dataset.value;
 
-        // Снимаем выделение со всех карточек этого экрана
         parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
         card.classList.add('selected');
 
-        // Сохраняем значение
         if (step === 2) state.role = value;
         if (step === 3) state.profession = value;
         if (step === 4) state.goal = value;
@@ -699,7 +807,6 @@
 
         state.gender = card.dataset.gender;
 
-        // Меняем аватарку на финальном экране
         const avatarSrc = state.gender === 'female'
           ? 'charactel_female.png.png'
           : 'IMG_8938%202.png';
@@ -717,7 +824,6 @@
     // === Кнопка Дальше / Начать ===
     nextBtn.addEventListener('click', () => {
       if (state.step === 6) {
-        // Финал — сохраняем и переходим в приложение
         finalName.textContent = state.name || 'друг';
 
         const user = {
@@ -731,7 +837,6 @@
 
         localStorage.setItem('alter_user', JSON.stringify(user));
 
-        // Небольшая задержка перед переходом — чтобы пользователь увидел финал
         nextBtn.textContent = 'Загрузка...';
         nextBtn.disabled = true;
 
@@ -739,7 +844,6 @@
           window.location.href = 'app.html';
         }, 400);
       } else {
-        // Обновляем имя на финальном экране
         if (state.step === 5) {
           finalName.textContent = state.name || 'друг';
         }
@@ -747,7 +851,7 @@
       }
     });
 
-    // === Фокус на поле имени при переходе ===
+    // === Фокус на поле имени ===
     const observer = new MutationObserver(() => {
       if (state.step === 1 && document.querySelector('.screen.active')?.dataset.step === '1') {
         setTimeout(() => nameInput.focus(), 500);
