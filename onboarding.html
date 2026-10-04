@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Альтер · Знакомство</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      height: 100vh;
+    }
+
+    /* ===== ФОН ===== */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #2a1f3d 0%, #1f1a2e 50%, #1a1524 100%);
+      z-index: 0;
+    }
+
+    .bg::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(255, 200, 100, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 80%, rgba(140, 100, 255, 0.06) 0%, transparent 50%);
+      animation: floatBg 20s ease-in-out infinite;
+    }
+
+    @keyframes floatBg {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-3%, -3%); }
+    }
+
+    /* ===== ПРОГРЕСС ===== */
+    .progress {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 100;
+      transition: opacity 0.3s ease;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dot.active {
+      background: #FFD166;
+      width: 20px;
+      border-radius: 3px;
+      box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+    }
+
+    .dot.done {
+      background: rgba(255, 209, 102, 0.5);
+    }
+
+    /* ===== ЭКРАНЫ ===== */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 32px 140px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+      z-index: 10;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .screen.leaving {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    /* ===== ЗАГОЛОВКИ ===== */
+    .heading {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.15;
+      text-align: center;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+    }
+
+    .heading .gold {
+      background: linear-gradient(135deg, #FFD166 0%, #FFA94D 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtext {
+      font-size: 16px;
+      line-height: 1.5;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 32px;
+      max-width: 340px;
+    }
+
+    /* ===== ХУК ===== */
+    .hook-icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.06); opacity: 0.9; }
+    }
+
+    /* ===== ВВОД ИМЕНИ ===== */
+    .name-input {
+      width: 100%;
+      max-width: 340px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 20px 24px;
+      font-size: 18px;
+      color: #fff;
+      outline: none;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .name-input:focus {
+      border-color: rgba(255, 209, 102, 0.5);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.08);
+    }
+
+    .name-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+    }
+
+    /* ===== КАРТОЧКИ ===== */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .cards.grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 18px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
+    }
+
+    .card:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .card.selected {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.18) 0%, rgba(255, 169, 77, 0.12) 100%);
+      border-color: rgba(255, 209, 102, 0.6);
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.1), 0 8px 24px rgba(255, 169, 77, 0.15);
+    }
+
+    .card-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .card.grid-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 22px 12px;
+      gap: 10px;
+    }
+
+    .card.grid-card .card-icon {
+      font-size: 32px;
+    }
+
+    /* ===== ВЫБОР ПОЛА ===== */
+    .gender-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .gender-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 22px;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gender-card:active {
+      transform: scale(0.97);
+    }
+
+    .gender-card.selected {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.18) 0%, rgba(255, 169, 77, 0.12) 100%);
+      border-color: rgba(255, 209, 102, 0.6);
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.1);
+    }
+
+    .gender-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gender-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 15%;
+    }
+
+    .gender-label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* ===== ФИНАЛ ===== */
+    .final-avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 169, 77, 0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      box-shadow: 0 20px 60px rgba(255, 169, 77, 0.25),
+                  0 0 0 6px rgba(255, 209, 102, 0.1);
+      animation: finalIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .final-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 15%;
+    }
+
+    @keyframes finalIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== КНОПКИ ===== */
+    .actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 32px calc(20px + env(safe-area-inset-bottom));
+      z-index: 100;
+      background: linear-gradient(to top, rgba(26, 21, 36, 0.95), transparent);
+      transition: opacity 0.3s ease;
+    }
+
+    .btn {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      display: block;
+      background: linear-gradient(135deg, #FFD166 0%, #FFA94D 100%);
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1524;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+      box-shadow: 0 8px 24px rgba(255, 169, 77, 0.3);
+      letter-spacing: -0.2px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* ===== НАЗАД ===== */
+    .back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .back:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .back.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <!-- Прогресс -->
+  <div class="progress" id="progress">
+    <div class="dot" data-step="0"></div>
+    <div class="dot" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+    <div class="dot" data-step="3"></div>
+    <div class="dot" data-step="4"></div>
+    <div class="dot" data-step="5"></div>
+    <div class="dot" data-step="6"></div>
+  </div>
+
+  <!-- Назад -->
+  <button class="back" id="backBtn">←</button>
+
+  <!-- ШАГ 1: ХУК -->
+  <div class="screen active" data-step="0">
+    <div class="hook-icon">🌅</div>
+    <h1 class="heading">
+      Каждый день<br>
+      обещаешь <span class="gold">начать</span>.<br>
+      Каждый день — <span class="gold">завтра</span>.
+    </h1>
+    <p class="subtext">
+      Хватит откладывать. У тебя появится тот,
+      кто будет расти вместе с тобой.
+    </p>
+  </div>
+
+  <!-- ШАГ 2: ИМЯ -->
+  <div class="screen" data-step="1">
+    <h1 class="heading">Как тебя<br><span class="gold">называть?</span></h1>
+    <p class="subtext">Так к тебе будет обращаться твой Альтер.</p>
+    <input
+      type="text"
+      class="name-input"
+      id="nameInput"
+      placeholder="Введи имя"
+      maxlength="20"
+      autocomplete="off"
+    >
+  </div>
+
+  <!-- ШАГ 3: КТО ТЫ -->
+  <div class="screen" data-step="2">
+    <h1 class="heading">Кто <span class="gold">ты?</span></h1>
+    <p class="subtext">Это поможет подобрать задачи.</p>
+    <div class="cards">
+      <button class="card" data-value="school">
+        <span class="card-icon">🎓</span>
+        <span>Школьник</span>
+      </button>
+      <button class="card" data-value="student">
+        <span class="card-icon">📚</span>
+        <span>Студент</span>
+      </button>
+      <button class="card" data-value="work">
+        <span class="card-icon">💼</span>
+        <span>Работаю</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 4: ПРОФЕССИЯ -->
+  <div class="screen" data-step="3">
+    <h1 class="heading">Твоя <span class="gold">сфера</span></h1>
+    <p class="subtext">Выбери направление, в котором хочешь расти.</p>
+    <div class="cards grid">
+      <button class="card grid-card" data-value="medicine">
+        <span class="card-icon">⚕️</span>
+        <span>Медицина</span>
+      </button>
+      <button class="card grid-card" data-value="dentistry">
+        <span class="card-icon">🦷</span>
+        <span>Стоматология</span>
+      </button>
+      <button class="card grid-card" data-value="law">
+        <span class="card-icon">⚖️</span>
+        <span>Юриспруденция</span>
+      </button>
+      <button class="card grid-card" data-value="it">
+        <span class="card-icon">💻</span>
+        <span>IT</span>
+      </button>
+      <button class="card grid-card" data-value="economics">
+        <span class="card-icon">📊</span>
+        <span>Экономика</span>
+      </button>
+      <button class="card grid-card" data-value="other">
+        <span class="card-icon">✏️</span>
+        <span>Другое</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 5: ЦЕЛЬ -->
+  <div class="screen" data-step="4">
+    <h1 class="heading">Что хочешь<br><span class="gold">изменить?</span></h1>
+    <p class="subtext">Выбери главную цель на ближайший месяц.</p>
+    <div class="cards">
+      <button class="card" data-value="energy">
+        <span class="card-icon">⚡</span>
+        <span>Больше энергии</span>
+      </button>
+      <button class="card" data-value="focus">
+        <span class="card-icon">🧠</span>
+        <span>Лучше учиться</span>
+      </button>
+      <button class="card" data-value="fitness">
+        <span class="card-icon">💪</span>
+        <span>Быть в форме</span>
+      </button>
+      <button class="card" data-value="best">
+        <span class="card-icon">🎯</span>
+        <span>Стать лучшим в деле</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 6: ПОЛ -->
+  <div class="screen" data-step="5">
+    <h1 class="heading">Выбери<br><span class="gold">персонажа</span></h1>
+    <p class="subtext">Это твой цифровой двойник. Кем он будет?</p>
+    <div class="gender-row">
+      <div class="gender-card" data-gender="male">
+        <div class="gender-avatar">
+          <img src="IMG_8938%202.png" alt="Мужской">
+        </div>
+        <div class="gender-label">Мужской</div>
+      </div>
+      <div class="gender-card" data-gender="female">
+        <div class="gender-avatar">
+          <img src="charactel_female.png.png" alt="Женский">
+        </div>
+        <div class="gender-label">Женский</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ШАГ 7: ФИНАЛ -->
+  <div class="screen" data-step="6">
+    <div class="final-avatar" id="finalAvatar">
+      <img src="IMG_8938%202.png" alt="Персонаж">
+    </div>
+    <h1 class="heading">
+      Готово,<br>
+      <span class="gold" id="finalName">друг</span>!
+    </h1>
+    <p class="subtext">
+      Твой Альтер создан.<br>
+      Теперь каждый день — маленький шаг<br>
+      к лучшей версии себя.
+    </p>
+  </div>
+
+  <!-- Кнопка -->
+  <div class="actions" id="actions">
+    <button class="btn" id="nextBtn" disabled>Начать</button>
+  </div>
+
+  <script>
+    // === Инициализация Telegram ===
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor?.('#1a1524');
+    }
+
+    // === Состояние ===
+    const state = {
+      step: 0,
+      name: '',
+      role: '',
+      profession: '',
+      goal: '',
+      gender: ''
+    };
+
+    // Проверяем, не проходил ли пользователь уже онбординг
+    const saved = localStorage.getItem('alter_user');
+    if (saved) {
+      try {
+        const user = JSON.parse(saved);
+        if (user.name && user.gender) {
+          window.location.href = 'app.html';
+        }
+      } catch(e) {}
+    }
+
+    // === Элементы ===
+    const screens = document.querySelectorAll('.screen');
+    const dots = document.querySelectorAll('.dot');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const progress = document.getElementById('progress');
+    const nameInput = document.getElementById('nameInput');
+    const finalName = document.getElementById('finalName');
+    const finalAvatar = document.getElementById('finalAvatar');
+
+    // === Тексты кнопки ===
+    const buttonTexts = [
+      'Начать',
+      'Продолжить',
+      'Дальше',
+      'Дальше',
+      'Дальше',
+      'Дальше',
+      'Продолжить'
+    ];
+
+    // === Переход между экранами ===
+    function goToStep(newStep) {
+      if (newStep < 0 || newStep >= screens.length) return;
+
+      const current = document.querySelector('.screen.active');
+      if (current) {
+        current.classList.remove('active');
+        current.classList.add('leaving');
+        setTimeout(() => current.classList.remove('leaving'), 400);
+      }
+
+      state.step = newStep;
+
+      setTimeout(() => {
+        screens[newStep].classList.add('active');
+        updateProgress();
+        updateButton();
+        updateBack();
+      }, 50);
+    }
+
+    // === Прогресс ===
+    function updateProgress() {
+      dots.forEach((dot, i) => {
+        dot.classList.remove('active', 'done');
+        if (i < state.step) dot.classList.add('done');
+        if (i === state.step) dot.classList.add('active');
+      });
+    }
+
+    // === Кнопка назад ===
+    function updateBack() {
+      if (state.step > 0 && state.step < 6) {
+        backBtn.classList.add('visible');
+      } else {
+        backBtn.classList.remove('visible');
+      }
+    }
+
+    // === Обновление кнопки ===
+    function updateButton() {
+      const step = state.step;
+      nextBtn.textContent = buttonTexts[step];
+
+      let canProceed = false;
+      switch (step) {
+        case 0: canProceed = true; break;
+        case 1: canProceed = state.name.trim().length >= 2; break;
+        case 2: canProceed = !!state.role; break;
+        case 3: canProceed = !!state.profession; break;
+        case 4: canProceed = !!state.goal; break;
+        case 5: canProceed = !!state.gender; break;
+        case 6: canProceed = true; break;
+      }
+
+      nextBtn.disabled = !canProceed;
+    }
+
+    // === Ввод имени ===
+    nameInput.addEventListener('input', (e) => {
+      state.name = e.target.value;
+      updateButton();
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && state.name.trim().length >= 2) {
+        nameInput.blur();
+        goToStep(2);
+      }
+    });
+
+    // === Выбор карточек ===
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        const parent = card.closest('.screen');
+        const step = parseInt(parent.dataset.step);
+        const value = card.dataset.value;
+
+        // Снимаем выделение со всех карточек этого экрана
+        parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        // Сохраняем значение
+        if (step === 2) state.role = value;
+        if (step === 3) state.profession = value;
+        if (step === 4) state.goal = value;
+
+        updateButton();
+      });
+    });
+
+    // === Выбор пола ===
+    document.querySelectorAll('.gender-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        state.gender = card.dataset.gender;
+
+        // Меняем аватарку на финальном экране
+        const avatarSrc = state.gender === 'female'
+          ? 'charactel_female.png.png'
+          : 'IMG_8938%202.png';
+        finalAvatar.querySelector('img').src = avatarSrc;
+
+        updateButton();
+      });
+    });
+
+    // === Кнопка назад ===
+    backBtn.addEventListener('click', () => {
+      goToStep(state.step - 1);
+    });
+
+    // === Кнопка Дальше / Начать ===
+    nextBtn.addEventListener('click', () => {
+      if (state.step === 6) {
+        // Финал — сохраняем и переходим в приложение
+        finalName.textContent = state.name || 'друг';
+
+        const user = {
+          name: state.name,
+          role: state.role,
+          profession: state.profession,
+          goal: state.goal,
+          gender: state.gender,
+          createdAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('alter_user', JSON.stringify(user));
+
+        // Небольшая задержка перед переходом — чтобы пользователь увидел финал
+        nextBtn.textContent = 'Загрузка...';
+        nextBtn.disabled = true;
+
+        setTimeout(() => {
+          window.location.href = 'app.html';
+        }, 400);
+      } else {
+        // Обновляем имя на финальном экране
+        if (state.step === 5) {
+          finalName.textContent = state.name || 'друг';
+        }
+        goToStep(state.step + 1);
+      }
+    });
+
+    // === Фокус на поле имени при переходе ===
+    const observer = new MutationObserver(() => {
+      if (state.step === 1 && document.querySelector('.screen.active')?.dataset.step === '1') {
+        setTimeout(() => nameInput.focus(), 500);
+      }
+    });
+
+    screens.forEach(s => observer.observe(s, { attributes: true, attributeFilter: ['class'] }));
+
+    // === Инициализация ===
+    updateProgress();
+    updateButton();
+    updateBack();
+  </script>
+</body>
+</html>
