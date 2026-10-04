@@ -29,23 +29,6 @@
       z-index: 0;
     }
 
-    .bg::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at 30% 20%, rgba(255, 200, 100, 0.08) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 80%, rgba(140, 100, 255, 0.06) 0%, transparent 50%);
-      animation: floatBg 20s ease-in-out infinite;
-    }
-
-    @keyframes floatBg {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(-3%, -3%); }
-    }
-
     /* ===== ПРОГРЕСС ===== */
     .progress {
       position: fixed;
@@ -103,119 +86,167 @@
       transform: translateY(-20px);
     }
 
-    /* ===== РАССВЕТ ===== */
-    .sunrise {
-      position: relative;
-      width: 180px;
-      height: 180px;
-      margin-bottom: 32px;
-      border-radius: 50%;
+    /* ===== ПОЛНОЭКРАННЫЙ РАССВЕТ (только для 1-го экрана) ===== */
+    .sunrise-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
       overflow: hidden;
       background: linear-gradient(to bottom,
-        #2a1f3d 0%,
-        #4a2c5a 30%,
-        #8b3a62 55%,
-        #d94f4f 75%,
+        #1a1429 0%,
+        #2a1f3d 25%,
+        #4a2c5a 50%,
+        #8b3a62 72%,
+        #d94f4f 88%,
         #ffa94d 100%);
-      box-shadow:
-        0 24px 60px rgba(255, 169, 77, 0.3),
-        0 0 0 1px rgba(255, 209, 102, 0.15),
-        inset 0 0 40px rgba(255, 169, 77, 0.08);
-      animation: skyGlow 6s ease-in-out infinite;
+      opacity: 0;
+      animation: sunriseFadeIn 1.2s ease-out 0.2s forwards;
     }
 
-    @keyframes skyGlow {
-      0%, 100% {
-        box-shadow:
-          0 24px 60px rgba(255, 169, 77, 0.25),
-          0 0 0 1px rgba(255, 209, 102, 0.12),
-          inset 0 0 40px rgba(255, 169, 77, 0.05);
-      }
-      50% {
-        box-shadow:
-          0 24px 80px rgba(255, 169, 77, 0.5),
-          0 0 0 1px rgba(255, 209, 102, 0.25),
-          inset 0 0 60px rgba(255, 169, 77, 0.15);
-      }
+    @keyframes sunriseFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
+    /* Лучи — исходят от солнца, вращаются бесконечно */
+    .rays {
+      position: absolute;
+      bottom: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200%;
+      height: 120%;
+      background: conic-gradient(
+        from 0deg at 50% 100%,
+        transparent 0deg,
+        rgba(255, 209, 102, 0.18) 6deg,
+        transparent 12deg,
+        transparent 24deg,
+        rgba(255, 169, 77, 0.14) 30deg,
+        transparent 36deg,
+        transparent 48deg,
+        rgba(255, 209, 102, 0.16) 54deg,
+        transparent 60deg,
+        transparent 72deg,
+        rgba(255, 169, 77, 0.12) 78deg,
+        transparent 84deg,
+        transparent 96deg,
+        rgba(255, 209, 102, 0.15) 102deg,
+        transparent 108deg,
+        transparent 120deg,
+        rgba(255, 169, 77, 0.13) 126deg,
+        transparent 132deg
+      );
+      animation: raysRotate 40s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes raysRotate {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    /* Лучи пульсируют — «дышат» */
+    .rays-pulse {
+      position: absolute;
+      bottom: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140%;
+      height: 100%;
+      background: radial-gradient(
+        ellipse at 50% 100%,
+        rgba(255, 209, 102, 0.25) 0%,
+        rgba(255, 169, 77, 0.12) 25%,
+        transparent 60%
+      );
+      animation: raysPulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes raysPulse {
+      0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+    }
+
+    /* Солнце — встаёт один раз и застывает */
     .sun {
       position: absolute;
-      bottom: -60px;
+      bottom: -100px;
       left: 50%;
-      margin-left: -40px;
-      width: 80px;
-      height: 80px;
+      margin-left: -55px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       background: radial-gradient(circle at 50% 50%,
-        #fff3c4 0%,
+        #fff8dc 0%,
         #ffe68a 25%,
         #ffb547 60%,
         #ff8c42 100%);
       box-shadow:
-        0 0 30px rgba(255, 209, 102, 0.9),
-        0 0 70px rgba(255, 169, 77, 0.6),
-        0 0 120px rgba(255, 140, 66, 0.4);
-      animation: rise 6s ease-in-out infinite;
+        0 0 40px rgba(255, 209, 102, 0.9),
+        0 0 90px rgba(255, 169, 77, 0.6),
+        0 0 160px rgba(255, 140, 66, 0.35);
+      animation: sunRise 4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
       z-index: 1;
     }
 
-    @keyframes rise {
-      0%, 100% {
-        bottom: -60px;
+    @keyframes sunRise {
+      0% {
+        bottom: -100px;
         opacity: 0.6;
-        transform: scale(0.9);
       }
-      50% {
-        bottom: 30px;
+      100% {
+        bottom: 22%;
         opacity: 1;
-        transform: scale(1);
       }
     }
 
-    .rays {
+    /* Лёгкое «дыхание» солнца — после подъёма */
+    .sun::after {
+      content: '';
       position: absolute;
-      inset: 0;
-      z-index: 0;
-      background: conic-gradient(
-        from 0deg at 50% 100%,
-        transparent 0deg,
-        rgba(255, 209, 102, 0.15) 8deg,
-        transparent 16deg,
-        transparent 30deg,
-        rgba(255, 169, 77, 0.1) 38deg,
-        transparent 46deg,
-        transparent 60deg,
-        rgba(255, 209, 102, 0.12) 68deg,
-        transparent 76deg,
-        transparent 90deg,
-        rgba(255, 169, 77, 0.1) 98deg,
-        transparent 106deg
-      );
-      animation: raysRotate 30s linear infinite, raysFade 6s ease-in-out infinite;
+      inset: -20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 209, 102, 0.3) 0%, transparent 70%);
+      animation: sunGlow 4s ease-in-out 4.5s infinite;
+      z-index: -1;
     }
 
-    @keyframes raysRotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    @keyframes sunGlow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); }
     }
 
-    @keyframes raysFade {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.8; }
-    }
-
+    /* Горизонт — тёмная полоса, скрывает «низ» солнца */
     .horizon {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 35%;
+      height: 22%;
       background: linear-gradient(to top,
-        #1a1524 0%,
-        rgba(26, 21, 36, 0.95) 40%,
+        #0d0a15 0%,
+        rgba(13, 10, 21, 0.9) 50%,
         transparent 100%);
       z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Затемнение снизу — для читаемости текста */
+    .sunrise-bg::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: linear-gradient(to top,
+        rgba(13, 10, 21, 0.75) 0%,
+        rgba(13, 10, 21, 0.4) 40%,
+        transparent 100%);
+      z-index: 3;
+      pointer-events: none;
     }
 
     /* ===== ЗАГОЛОВКИ ===== */
@@ -226,6 +257,7 @@
       text-align: center;
       margin-bottom: 16px;
       letter-spacing: -0.5px;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
     }
 
     .heading .gold {
@@ -239,9 +271,16 @@
       font-size: 16px;
       line-height: 1.5;
       text-align: center;
-      color: rgba(255, 255, 255, 0.65);
+      color: rgba(255, 255, 255, 0.75);
       margin-bottom: 32px;
       max-width: 340px;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Отступ для первого экрана — текст над горизонтом */
+    .screen[data-step="0"] {
+      justify-content: flex-start;
+      padding-top: 18vh;
     }
 
     /* ===== ВВОД ИМЕНИ ===== */
@@ -504,13 +543,15 @@
 
   <button class="back" id="backBtn">←</button>
 
-  <!-- ШАГ 1: ХУК -->
+  <!-- ШАГ 1: ХУК С ПОЛНОЭКРАННЫМ РАССВЕТОМ -->
   <div class="screen active" data-step="0">
-    <div class="sunrise">
+    <div class="sunrise-bg">
       <div class="rays"></div>
+      <div class="rays-pulse"></div>
       <div class="sun"></div>
       <div class="horizon"></div>
     </div>
+
     <h1 class="heading">
       Каждый день<br>
       обещаешь <span class="gold">начать</span>.<br>
@@ -653,7 +694,6 @@
   </div>
 
   <script>
-    // === Инициализация Telegram ===
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
@@ -697,7 +737,6 @@
     const finalName = document.getElementById('finalName');
     const finalAvatar = document.getElementById('finalAvatar');
 
-    // === Тексты кнопки ===
     const buttonTexts = [
       'Начать',
       'Продолжить',
@@ -708,7 +747,6 @@
       'Продолжить'
     ];
 
-    // === Переход между экранами ===
     function goToStep(newStep) {
       if (newStep < 0 || newStep >= screens.length) return;
 
