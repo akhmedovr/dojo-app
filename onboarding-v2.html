@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Альтер · Знакомство</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+      height: 100vh;
+    }
+
+    /* ===== ФОН ===== */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, #2a1f3d 0%, #1f1a2e 50%, #1a1524 100%);
+      z-index: 0;
+    }
+
+    /* ===== ПРОГРЕСС ===== */
+    .progress {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 100;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dot.active {
+      background: #FFD166;
+      width: 20px;
+      border-radius: 3px;
+      box-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
+    }
+
+    .dot.done {
+      background: rgba(255, 209, 102, 0.5);
+    }
+
+    /* ===== ЭКРАНЫ ===== */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 32px 140px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s;
+      z-index: 10;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .screen.leaving {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    /* ===== ПОЛНОЭКРАННЫЙ РАССВЕТ (только для 1-го экрана) ===== */
+    .sunrise-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      background: linear-gradient(to bottom,
+        #1a1429 0%,
+        #2a1f3d 25%,
+        #4a2c5a 50%,
+        #8b3a62 72%,
+        #d94f4f 88%,
+        #ffa94d 100%);
+      opacity: 0;
+      animation: sunriseFadeIn 1.2s ease-out 0.2s forwards;
+    }
+
+    @keyframes sunriseFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Лучи — исходят от солнца, вращаются бесконечно */
+    .rays {
+      position: absolute;
+      bottom: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200%;
+      height: 120%;
+      background: conic-gradient(
+        from 0deg at 50% 100%,
+        transparent 0deg,
+        rgba(255, 209, 102, 0.18) 6deg,
+        transparent 12deg,
+        transparent 24deg,
+        rgba(255, 169, 77, 0.14) 30deg,
+        transparent 36deg,
+        transparent 48deg,
+        rgba(255, 209, 102, 0.16) 54deg,
+        transparent 60deg,
+        transparent 72deg,
+        rgba(255, 169, 77, 0.12) 78deg,
+        transparent 84deg,
+        transparent 96deg,
+        rgba(255, 209, 102, 0.15) 102deg,
+        transparent 108deg,
+        transparent 120deg,
+        rgba(255, 169, 77, 0.13) 126deg,
+        transparent 132deg
+      );
+      animation: raysRotate 40s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes raysRotate {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    /* Лучи пульсируют — «дышат» */
+    .rays-pulse {
+      position: absolute;
+      bottom: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140%;
+      height: 100%;
+      background: radial-gradient(
+        ellipse at 50% 100%,
+        rgba(255, 209, 102, 0.25) 0%,
+        rgba(255, 169, 77, 0.12) 25%,
+        transparent 60%
+      );
+      animation: raysPulse 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes raysPulse {
+      0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+    }
+
+    /* Солнце — встаёт один раз и застывает */
+    .sun {
+      position: absolute;
+      bottom: -100px;
+      left: 50%;
+      margin-left: -55px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%,
+        #fff8dc 0%,
+        #ffe68a 25%,
+        #ffb547 60%,
+        #ff8c42 100%);
+      box-shadow:
+        0 0 40px rgba(255, 209, 102, 0.9),
+        0 0 90px rgba(255, 169, 77, 0.6),
+        0 0 160px rgba(255, 140, 66, 0.35);
+      animation: sunRise 4s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+      z-index: 1;
+    }
+
+    @keyframes sunRise {
+      0% {
+        bottom: -100px;
+        opacity: 0.6;
+      }
+      100% {
+        bottom: 22%;
+        opacity: 1;
+      }
+    }
+
+    /* Лёгкое «дыхание» солнца — после подъёма */
+    .sun::after {
+      content: '';
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 209, 102, 0.3) 0%, transparent 70%);
+      animation: sunGlow 4s ease-in-out 4.5s infinite;
+      z-index: -1;
+    }
+
+    @keyframes sunGlow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    /* Горизонт — тёмная полоса, скрывает «низ» солнца */
+    .horizon {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 22%;
+      background: linear-gradient(to top,
+        #0d0a15 0%,
+        rgba(13, 10, 21, 0.9) 50%,
+        transparent 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Затемнение снизу — для читаемости текста */
+    .sunrise-bg::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: linear-gradient(to top,
+        rgba(13, 10, 21, 0.75) 0%,
+        rgba(13, 10, 21, 0.4) 40%,
+        transparent 100%);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* ===== ЗАГОЛОВКИ ===== */
+    .heading {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.15;
+      text-align: center;
+      margin-bottom: 16px;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .heading .gold {
+      background: linear-gradient(135deg, #FFD166 0%, #FFA94D 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtext {
+      font-size: 16px;
+      line-height: 1.5;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.75);
+      margin-bottom: 32px;
+      max-width: 340px;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .screen[data-step="0"] {
+      justify-content: flex-start;
+      padding-top: 18vh;
+    }
+
+    /* ===== ВВОД ИМЕНИ ===== */
+    .name-input {
+      width: 100%;
+      max-width: 340px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 20px 24px;
+      font-size: 18px;
+      color: #fff;
+      outline: none;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .name-input:focus {
+      border-color: rgba(255, 209, 102, 0.5);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.08);
+    }
+
+    .name-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+    }
+
+    /* ===== КАРТОЧКИ ===== */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .cards.grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 18px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
+    }
+
+    .card:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .card.selected {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.18) 0%, rgba(255, 169, 77, 0.12) 100%);
+      border-color: rgba(255, 209, 102, 0.6);
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.1), 0 8px 24px rgba(255, 169, 77, 0.15);
+    }
+
+    .card-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .card.grid-card {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 22px 12px;
+      gap: 10px;
+    }
+
+    .card.grid-card .card-icon {
+      font-size: 32px;
+    }
+
+    /* ===== ВЫБОР ПОЛА ===== */
+    .gender-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .gender-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 22px;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gender-card:active {
+      transform: scale(0.97);
+    }
+
+    .gender-card.selected {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.18) 0%, rgba(255, 169, 77, 0.12) 100%);
+      border-color: rgba(255, 209, 102, 0.6);
+      box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.1);
+    }
+
+    .gender-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gender-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 15%;
+    }
+
+    .gender-label {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* ===== ФИНАЛ ===== */
+    .final-avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.2), rgba(255, 169, 77, 0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      box-shadow: 0 20px 60px rgba(255, 169, 77, 0.25),
+                  0 0 0 6px rgba(255, 209, 102, 0.1);
+      animation: finalIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .final-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 15%;
+    }
+
+    @keyframes finalIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ===== КНОПКИ ===== */
+    .actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 32px calc(20px + env(safe-area-inset-bottom));
+      z-index: 100;
+      background: linear-gradient(to top, rgba(26, 21, 36, 0.95), transparent);
+    }
+
+    .btn {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      display: block;
+      background: linear-gradient(135deg, #FFD166 0%, #FFA94D 100%);
+      border: none;
+      border-radius: 18px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1524;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
+      box-shadow: 0 8px 24px rgba(255, 169, 77, 0.3);
+      letter-spacing: -0.2px;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* ===== НАЗАД ===== */
+    .back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .back:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .back.visible {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="progress" id="progress">
+    <div class="dot" data-step="0"></div>
+    <div class="dot" data-step="1"></div>
+    <div class="dot" data-step="2"></div>
+    <div class="dot" data-step="3"></div>
+    <div class="dot" data-step="4"></div>
+    <div class="dot" data-step="5"></div>
+    <div class="dot" data-step="6"></div>
+  </div>
+
+  <button class="back" id="backBtn">←</button>
+
+  <!-- ШАГ 1: ХУК С ПОЛНОЭКРАННЫМ РАССВЕТОМ -->
+  <div class="screen active" data-step="0">
+    <div class="sunrise-bg">
+      <div class="rays"></div>
+      <div class="rays-pulse"></div>
+      <div class="sun"></div>
+      <div class="horizon"></div>
+    </div>
+
+    <h1 class="heading">
+      Каждый день<br>
+      обещаешь <span class="gold">начать</span>.<br>
+      Каждый день — <span class="gold">завтра</span>.
+    </h1>
+    <p class="subtext">
+      Хватит откладывать. У тебя появится тот,
+      кто будет расти вместе с тобой.
+    </p>
+  </div>
+
+  <!-- ШАГ 2: ИМЯ -->
+  <div class="screen" data-step="1">
+    <h1 class="heading">Как тебя<br><span class="gold">называть?</span></h1>
+    <p class="subtext">Так к тебе будет обращаться твой Альтер.</p>
+    <input
+      type="text"
+      class="name-input"
+      id="nameInput"
+      placeholder="Введи имя"
+      maxlength="20"
+      autocomplete="off"
+    >
+  </div>
+
+  <!-- ШАГ 3: КТО ТЫ -->
+  <div class="screen" data-step="2">
+    <h1 class="heading">Кто <span class="gold">ты?</span></h1>
+    <p class="subtext">Это поможет подобрать задачи.</p>
+    <div class="cards">
+      <button class="card" data-value="school">
+        <span class="card-icon">🎓</span>
+        <span>Школьник</span>
+      </button>
+      <button class="card" data-value="student">
+        <span class="card-icon">📚</span>
+        <span>Студент</span>
+      </button>
+      <button class="card" data-value="work">
+        <span class="card-icon">💼</span>
+        <span>Работаю</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 4: ПРОФЕССИЯ -->
+  <div class="screen" data-step="3">
+    <h1 class="heading">Твоя <span class="gold">сфера</span></h1>
+    <p class="subtext">Выбери направление, в котором хочешь расти.</p>
+    <div class="cards grid">
+      <button class="card grid-card" data-value="medicine">
+        <span class="card-icon">⚕️</span>
+        <span>Медицина</span>
+      </button>
+      <button class="card grid-card" data-value="dentistry">
+        <span class="card-icon">🦷</span>
+        <span>Стоматология</span>
+      </button>
+      <button class="card grid-card" data-value="law">
+        <span class="card-icon">⚖️</span>
+        <span>Юриспруденция</span>
+      </button>
+      <button class="card grid-card" data-value="it">
+        <span class="card-icon">💻</span>
+        <span>IT</span>
+      </button>
+      <button class="card grid-card" data-value="economics">
+        <span class="card-icon">📊</span>
+        <span>Экономика</span>
+      </button>
+      <button class="card grid-card" data-value="other">
+        <span class="card-icon">✏️</span>
+        <span>Другое</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 5: ЦЕЛЬ -->
+  <div class="screen" data-step="4">
+    <h1 class="heading">Что хочешь<br><span class="gold">изменить?</span></h1>
+    <p class="subtext">Выбери главную цель на ближайший месяц.</p>
+    <div class="cards">
+      <button class="card" data-value="energy">
+        <span class="card-icon">⚡</span>
+        <span>Больше энергии</span>
+      </button>
+      <button class="card" data-value="focus">
+        <span class="card-icon">🧠</span>
+        <span>Лучше учиться</span>
+      </button>
+      <button class="card" data-value="fitness">
+        <span class="card-icon">💪</span>
+        <span>Быть в форме</span>
+      </button>
+      <button class="card" data-value="best">
+        <span class="card-icon">🎯</span>
+        <span>Стать лучшим в деле</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ШАГ 6: ПОЛ -->
+  <div class="screen" data-step="5">
+    <h1 class="heading">Выбери<br><span class="gold">персонажа</span></h1>
+    <p class="subtext">Это твой цифровой двойник. Кем он будет?</p>
+    <div class="gender-row">
+      <div class="gender-card" data-gender="male">
+        <div class="gender-avatar">
+          <img src="IMG_8938%202.png" alt="Мужской">
+        </div>
+        <div class="gender-label">Мужской</div>
+      </div>
+      <div class="gender-card" data-gender="female">
+        <div class="gender-avatar">
+          <img src="charactel_female.png.png" alt="Женский">
+        </div>
+        <div class="gender-label">Женский</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ШАГ 7: ФИНАЛ -->
+  <div class="screen" data-step="6">
+    <div class="final-avatar" id="finalAvatar">
+      <img src="IMG_8938%202.png" alt="Персонаж">
+    </div>
+    <h1 class="heading">
+      Готово,<br>
+      <span class="gold" id="finalName">друг</span>!
+    </h1>
+    <p class="subtext">
+      Твой Альтер создан.<br>
+      Теперь каждый день — маленький шаг<br>
+      к лучшей версии себя.
+    </p>
+  </div>
+
+  <div class="actions" id="actions">
+    <button class="btn" id="nextBtn" disabled>Начать</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor?.('#1a1524');
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('reset') === '1') {
+      localStorage.removeItem('alter_user');
+    }
+
+    const state = {
+      step: 0,
+      name: '',
+      role: '',
+      profession: '',
+      goal: '',
+      gender: ''
+    };
+
+    const saved = localStorage.getItem('alter_user');
+    if (saved) {
+      try {
+        const user = JSON.parse(saved);
+        if (user.name && user.gender) {
+          window.location.href = 'app.html';
+        }
+      } catch(e) {}
+    }
+
+    const screens = document.querySelectorAll('.screen');
+    const dots = document.querySelectorAll('.dot');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const nameInput = document.getElementById('nameInput');
+    const finalName = document.getElementById('finalName');
+    const finalAvatar = document.getElementById('finalAvatar');
+
+    const buttonTexts = [
+      'Начать',
+      'Продолжить',
+      'Дальше',
+      'Дальше',
+      'Дальше',
+      'Дальше',
+      'Продолжить'
+    ];
+
+    function goToStep(newStep) {
+      if (newStep < 0 || newStep >= screens.length) return;
+
+      const current = document.querySelector('.screen.active');
+      if (current) {
+        current.classList.remove('active');
+        current.classList.add('leaving');
+        setTimeout(() => current.classList.remove('leaving'), 400);
+      }
+
+      state.step = newStep;
+
+      setTimeout(() => {
+        screens[newStep].classList.add('active');
+        updateProgress();
+        updateButton();
+        updateBack();
+      }, 50);
+    }
+
+    function updateProgress() {
+      dots.forEach((dot, i) => {
+        dot.classList.remove('active', 'done');
+        if (i < state.step) dot.classList.add('done');
+        if (i === state.step) dot.classList.add('active');
+      });
+    }
+
+    function updateBack() {
+      if (state.step > 0 && state.step < 6) {
+        backBtn.classList.add('visible');
+      } else {
+        backBtn.classList.remove('visible');
+      }
+    }
+
+    function updateButton() {
+      const step = state.step;
+      nextBtn.textContent = buttonTexts[step];
+
+      let canProceed = false;
+      switch (step) {
+        case 0: canProceed = true; break;
+        case 1: canProceed = state.name.trim().length >= 2; break;
+        case 2: canProceed = !!state.role; break;
+        case 3: canProceed = !!state.profession; break;
+        case 4: canProceed = !!state.goal; break;
+        case 5: canProceed = !!state.gender; break;
+        case 6: canProceed = true; break;
+      }
+
+      nextBtn.disabled = !canProceed;
+    }
+
+    nameInput.addEventListener('input', (e) => {
+      state.name = e.target.value;
+      updateButton();
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && state.name.trim().length >= 2) {
+        nameInput.blur();
+        goToStep(2);
+      }
+    });
+
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        const parent = card.closest('.screen');
+        const step = parseInt(parent.dataset.step);
+        const value = card.dataset.value;
+
+        parent.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        if (step === 2) state.role = value;
+        if (step === 3) state.profession = value;
+        if (step === 4) state.goal = value;
+
+        updateButton();
+      });
+    });
+
+    document.querySelectorAll('.gender-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.gender-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+
+        state.gender = card.dataset.gender;
+
+        const avatarSrc = state.gender === 'female'
+          ? 'charactel_female.png.png'
+          : 'IMG_8938%202.png';
+        finalAvatar.querySelector('img').src = avatarSrc;
+
+        updateButton();
+      });
+    });
+
+    backBtn.addEventListener('click', () => {
+      goToStep(state.step - 1);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (state.step === 6) {
+        finalName.textContent = state.name || 'друг';
+
+        const user = {
+          name: state.name,
+          role: state.role,
+          profession: state.profession,
+          goal: state.goal,
+          gender: state.gender,
+          createdAt: new Date().toISOString()
+        };
+
+        localStorage.setItem('alter_user', JSON.stringify(user));
+
+        nextBtn.textContent = 'Загрузка...';
+        nextBtn.disabled = true;
+
+        setTimeout(() => {
+          window.location.href = 'app.html';
+        }, 400);
+      } else {
+        if (state.step === 5) {
+          finalName.textContent = state.name || 'друг';
+        }
+        goToStep(state.step + 1);
+      }
+    });
+
+    const observer = new MutationObserver(() => {
+      if (state.step === 1 && document.querySelector('.screen.active')?.dataset.step === '1') {
+        setTimeout(() => nameInput.focus(), 500);
+      }
+    });
+
+    screens.forEach(s => observer.observe(s, { attributes: true, attributeFilter: ['class'] }));
+
+    updateProgress();
+    updateButton();
+    updateBack();
+  </script>
+</body>
+</html>
