@@ -26,11 +26,8 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
     }
 
-    /* Комната на фоне */
     .room-bg {
       position: absolute;
       top: 0;
@@ -41,7 +38,6 @@
       z-index: 1;
     }
 
-    /* Верхняя панель */
     .top-bar {
       position: relative;
       z-index: 10;
@@ -60,8 +56,7 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
 
-    /* Персонаж */
-    .charactel {
+    .character {
       position: absolute;
       bottom: 22%;
       left: 50%;
@@ -78,7 +73,6 @@
       50% { transform: translateX(-50%) translateY(-4px) scale(1.015); }
     }
 
-    /* Заголовок */
     .title-block {
       position: absolute;
       top: 72px;
@@ -101,7 +95,6 @@
       text-shadow: 0 2px 4px rgba(0,0,0,0.6);
     }
 
-    /* Прогресс-бар */
     .progress {
       position: relative;
       z-index: 10;
@@ -121,7 +114,6 @@
       transition: width 0.5s ease;
     }
 
-    /* Нижняя панель с привычками */
     .habits {
       position: absolute;
       bottom: 0;
@@ -201,7 +193,6 @@
       border-color: #4CAF50;
     }
 
-    /* Всплывашка +XP */
     .xp-popup {
       position: fixed;
       top: 50%;
@@ -226,7 +217,6 @@
       100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
     }
 
-    /* Реплика персонажа */
     .bubble {
       position: absolute;
       top: 30%;
@@ -266,34 +256,27 @@
 </head>
 <body>
   <div class="app">
-    <!-- Фон-комната -->
     <img src="room.png.png" alt="" class="room-bg">
 
-    <!-- Верхняя панель -->
     <div class="top-bar">
       <div class="stat">🏆 Ур. 5</div>
       <div class="stat">⭐ 1250 XP</div>
       <div class="stat">🔥 7 дней</div>
     </div>
 
-    <!-- Заголовок -->
     <div class="title-block">
       <h1>Алекс, студент-медик</h1>
       <div class="level">3 курс · Цель: сдать сессию</div>
     </div>
 
-    <!-- Прогресс -->
     <div class="progress">
       <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <!-- Персонаж -->
-    <img src="character_male.png.png" alt="" class="charactel" id="charactel">
+    <img src="charactel_male.png.png" alt="" class="character" id="character">
 
-    <!-- Реплика -->
     <div class="bubble" id="bubble">Привет, Алекс! Готов начать день?</div>
 
-    <!-- Привычки -->
     <div class="habits">
       <div class="habit" data-xp="10">
         <div class="habit-left">
@@ -329,12 +312,10 @@
       </div>
     </div>
 
-    <!-- +XP попап -->
     <div class="xp-popup" id="xpPopup"></div>
   </div>
 
   <script>
-    // Инициализация Telegram WebApp
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
@@ -378,7 +359,6 @@
           bubble.textContent = phrases[Math.floor(Math.random() * phrases.length)];
         }
 
-        // Анимация появления bubble
         bubble.style.animation = 'none';
         setTimeout(() => {
           bubble.style.animation = 'bubbleIn 0.5s ease-out';
